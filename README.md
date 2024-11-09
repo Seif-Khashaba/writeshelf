@@ -103,14 +103,8 @@ Contributions are welcome! To contribute:
 
 ---
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
----
-
 ## Contact
 Created by:
 - **Seif Eldin** - seifeldin@example.com
 - **Ahmed Mostafa** - ahmedmostafa@example.com
 
-For any questions, feel free to contact us.
