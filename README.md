@@ -81,6 +81,7 @@ Once the application is running:
 
 ## Contact
 Created by:
-- **Seif Eldin** - seifeldin@example.com
-- **Ahmed Mostafa** - ahmedmostafa@example.com
+- **Seif khashaba** - s-seif.khashaba@zewailcity.edu.eg / 202200973
+- **Ahmed Mostafa** -s-ahmed.eldesouky@zewailcity.edu.eg / 2022201114
+- 
 
