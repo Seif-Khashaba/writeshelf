@@ -79,20 +79,6 @@ Once the application is running:
 
 ---
 
-## Testing
-WriteShelf includes a series of tests to ensure system stability:
-- **Unit Testing**: Tests individual modules and components.
-- **Integration Testing**: Verifies interactions between components like frontend-backend and backend-database.
-- **User Acceptance Testing (UAT)**: Ensures that end-user requirements are met.
-- **Performance Testing**: Evaluates system responsiveness under load.
-
-To run the tests:
-```bash
-pytest
-```
-
----
-
 ## Contributing
 Contributions are welcome! To contribute:
 1. Fork the repository.
