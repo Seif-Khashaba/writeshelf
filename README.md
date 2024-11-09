@@ -11,9 +11,6 @@ WriteShelf is a digital library and interactive platform designed for both reade
 - [Technology Stack](#technology-stack)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
 - [Contact](#contact)
 
 ---
