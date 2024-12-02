@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Details - WriteShelf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .book-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .book-header {
+            display: flex;
+            gap: 2rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .book-cover {
+            width: 300px;
+            height: 450px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .book-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-info {
+            flex: 1;
+        }
+
+        .book-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .book-author {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .book-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .meta-item {
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .meta-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .meta-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .book-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 1.5rem;
+        }
+
+        .genres {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .genre-tag {
+            padding: 0.4rem 1rem;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+
+        .rating-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .reviews-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .review {
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem 0;
+        }
+
+        .review:last-child {
+            border-bottom: none;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-author {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .review-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .review-content {
+            color: #444;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/main">WriteShelf</a>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown">
+                        <i class="bi bi-person-circle text-white fs-4" role="button" id="profileDropdown" data-bs-toggle="dropdown"></i>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="book-container" id="bookDetails">
+        <!-- Book details will be loaded here dynamically -->
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function loadBookDetails() {
+            const bookDetails = document.getElementById('bookDetails');
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookId = urlParams.get('id');
+
+            if (!bookId) {
+                bookDetails.innerHTML = `
+                    <div class="alert alert-danger">
+                        No book ID provided. <a href="/main">Return to main page</a>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/books/${bookId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load book details');
+                }
+
+                displayBookDetails(data);
+                await loadReviews(bookId);
+            } catch (error) {
+                console.error('Error loading book details:', error);
+                bookDetails.innerHTML = `
+                    <div class="alert alert-danger">
+                        ${error.message || 'Failed to load book details. Please try again later.'}
+                        <br>
+                        <a href="/main">Return to main page</a>
+                    </div>
+                `;
+            }
+        }
+
+        function displayBookDetails(book) {
+            const bookDetails = document.getElementById('bookDetails');
+            
+            const ratingStars = '★'.repeat(Math.floor(book.rating)) + 
+                               '☆'.repeat(5 - Math.floor(book.rating));
+
+            bookDetails.innerHTML = `
+                <div class="book-header">
+                    <div class="book-cover">
+                        <img src="${book.cover_image}" alt="${book.title}" onerror="this.src='https://picsum.photos/400/600'">
+                    </div>
+                    <div class="book-info">
+                        <h1 class="book-title">${book.title}</h1>
+                        <div class="book-author">by ${book.author}</div>
+                        
+                        <div class="rating">
+                            <div class="stars">${ratingStars}</div>
+                            <div class="rating-value">${book.rating.toFixed(1)}</div>
+                        </div>
+
+                        <div class="genres">
+                            ${book.genres.map(genre => `
+                                <span class="genre-tag">${genre}</span>
+                            `).join('')}
+                        </div>
+
+                        <p class="book-description">${book.description}</p>
+
+                        <div class="book-meta">
+                            <div class="meta-item">
+                                <div class="meta-label">Pages</div>
+                                <div class="meta-value">${book.pages}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Language</div>
+                                <div class="meta-value">${book.language}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Published</div>
+                                <div class="meta-value">${new Date(book.published_date).toLocaleDateString()}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">ISBN</div>
+                                <div class="meta-value">${book.isbn}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reviews-section">
+                    <h2 class="mb-4">Reviews</h2>
+                    <div id="reviewsList"></div>
+                </div>
+            `;
+        }
+
+        async function loadReviews(bookId) {
+            const reviewsList = document.getElementById('reviewsList');
+            
+            try {
+                const response = await fetch(`/api/books/${bookId}/reviews`);
+                const reviews = await response.json();
+
+                if (!response.ok) {
+                    throw new Error('Failed to load reviews');
+                }
+                
+                if (reviews.length === 0) {
+                    reviewsList.innerHTML = '<p class="text-muted">No reviews yet. Be the first to review!</p>';
+                    return;
+                }
+
+                reviewsList.innerHTML = reviews.map(review => `
+                    <div class="review">
+                        <div class="review-header">
+                            <span class="review-author">${review.username}</span>
+                            <span class="review-date">${new Date(review.date).toLocaleDateString()}</span>
+                        </div>
+                        <div class="stars">${'★'.repeat(Math.floor(review.rating))}${'☆'.repeat(5 - Math.floor(review.rating))}</div>
+                        <p class="review-content">${review.comment}</p>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                reviewsList.innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to load reviews. Please try again later.
+                    </div>
+                `;
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/api/logout');
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = data.redirect;
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // Load book details when page loads
+        document.addEventListener('DOMContentLoaded', loadBookDetails);
+    </script>
+</body>
+</html>
