@@ -40,7 +40,7 @@ WriteShelf is a standalone system that combines a digital library with social an
 ### Setup Instructions
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/WriteShelf.git
+   https://github.com/Seif-Khashaba/writeshelf.git
    cd WriteShelf
    ```
 
