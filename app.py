@@ -23,7 +23,7 @@ db = client.writeshelf  # database name
 
 # Initialize MongoDB collections
 users = db.users
-books = db.books  # Add books collection
+books = db.books  
 
 # Test MongoDB connection
 try:
@@ -265,9 +265,32 @@ def get_profile():
     try:
         user = users.find_one({'username': session['username']})
         if user:
+            # Count user's reviews across all books
+            review_count = 0
+            user_reviews = []
+            all_books = books.find({})
+            
+            for book in all_books:
+                book_reviews = [review for review in book.get('reviews', []) 
+                              if review.get('user_name') == session['username']]
+                review_count += len(book_reviews)
+                for review in book_reviews:
+                    user_reviews.append({
+                        'book_id': str(book['_id']),
+                        'book_title': book['title'],
+                        'rating': review['rating'],
+                        'review': review['review'],
+                        'date': review['date']
+                    })
+
             # Remove sensitive information
             user.pop('password', None)
-            user['_id'] = str(user['_id'])  # Convert ObjectId to string
+            user['_id'] = str(user['_id'])
+            user['reviews'] = review_count
+            user['review_history'] = sorted(user_reviews, 
+                                          key=lambda x: x['date'], 
+                                          reverse=True)
+            
             return jsonify({
                 'success': True,
                 'profile': user
@@ -360,58 +383,58 @@ def get_book(book_id):
 @app.route('/api/books/<book_id>/reviews', methods=['GET', 'POST'])
 def handle_reviews(book_id):
     try:
-        # Validate ObjectId format
-        try:
-            book_object_id = ObjectId(book_id)
-        except InvalidId:
-            return jsonify({'error': 'Invalid book ID format'}), 400
-            
+        if not ObjectId.is_valid(book_id):
+            return jsonify({'error': 'Invalid book ID'}), 400
+
+        book = books.find_one({'_id': ObjectId(book_id)})
+        if not book:
+            return jsonify({'error': 'Book not found'}), 404
+
         if request.method == 'GET':
-            book = books.find_one({'_id': book_object_id})
-            if not book:
-                return jsonify({'error': 'Book not found'}), 404
+            # Return the reviews array from the book document
             return jsonify(book.get('reviews', []))
-            
+
         elif request.method == 'POST':
             if 'username' not in session:
-                return jsonify({'error': 'Unauthorized'}), 401
+                return jsonify({'error': 'User must be logged in to submit reviews'}), 401
 
             data = request.get_json()
-            
-            if not all(key in data for key in ['rating', 'comment']):
-                return jsonify({'error': 'Missing required fields'}), 400
-                
-            rating = float(data['rating'])
-            if rating < 1 or rating > 5:
-                return jsonify({'error': 'Rating must be between 1 and 5'}), 400
-                
-            review = {
-                'username': session['username'],
-                'rating': rating,
-                'comment': data['comment'],
-                'date': datetime.utcnow()
+            if not data or 'rating' not in data or 'review' not in data:
+                return jsonify({'error': 'Rating and review are required'}), 400
+
+            # Create new review object
+            new_review = {
+                'user_name': session['username'],
+                'rating': int(data['rating']),
+                'review': data['review'],
+                'date': datetime.utcnow().isoformat()
             }
-            
+
+            # Update the book document by pushing the new review to the reviews array
             result = books.update_one(
-                {'_id': book_object_id},
+                {'_id': ObjectId(book_id)},
                 {
-                    '$push': {'reviews': review},
+                    '$push': {'reviews': new_review},
                     '$set': {
-                        'rating': {
-                            '$avg': '$reviews.rating'
-                        }
+                        'rating': calculate_average_rating(book['reviews'] + [new_review])
                     }
                 }
             )
-            
+
             if result.modified_count == 0:
-                return jsonify({'error': 'Book not found'}), 404
-                
-            return jsonify({'message': 'Review added successfully'}), 201
-            
+                return jsonify({'error': 'Failed to add review'}), 500
+
+            return jsonify({'success': True, 'message': 'Review added successfully'})
+
     except Exception as e:
         print(f"Error handling reviews: {str(e)}")
-        return jsonify({'error': 'An error occurred while processing the request'}), 500
+        return jsonify({'error': str(e)}), 500
+
+def calculate_average_rating(reviews):
+    if not reviews:
+        return 0
+    total = sum(review['rating'] for review in reviews)
+    return round(total / len(reviews), 1)
 
 if __name__ == '__main__':
     app.run(debug=True)

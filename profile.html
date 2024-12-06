@@ -56,6 +56,62 @@
         .edit-profile-btn {
             margin-top: 1rem;
         }
+        .review-history {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+        }
+        
+        .review-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .review-title {
+            font-weight: bold;
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        
+        .review-title:hover {
+            text-decoration: underline;
+        }
+        
+        .review-rating {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .review-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .review-content {
+            color: #212529;
+            margin-top: 0.5rem;
+        }
+        
+        .no-reviews {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
@@ -117,7 +173,15 @@
             </div>
         </div>
 
-        <div class="text-center">
+        <!-- Review History Section -->
+        <div class="review-history mt-4">
+            <h3 class="mb-3">Your Reviews</h3>
+            <div id="reviewHistory" class="review-list">
+                <!-- Reviews will be loaded here -->
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
             <button class="btn btn-primary edit-profile-btn" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                 Edit Profile
             </button>
@@ -180,6 +244,28 @@
                     document.getElementById('editUsername').value = data.profile.username;
                     document.getElementById('editEmail').value = data.profile.email;
                     document.getElementById('editBio').value = data.profile.bio || '';
+
+                    // Display review history
+                    const reviewHistory = document.getElementById('reviewHistory');
+                    if (data.profile.review_history && data.profile.review_history.length > 0) {
+                        reviewHistory.innerHTML = data.profile.review_history.map(review => `
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <a href="/book.html?id=${review.book_id}" class="review-title">${review.book_title}</a>
+                                    <div class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                                </div>
+                                <div class="review-date">${new Date(review.date).toLocaleDateString()}</div>
+                                <div class="review-content">${review.review}</div>
+                            </div>
+                        `).join('');
+                    } else {
+                        reviewHistory.innerHTML = `
+                            <div class="no-reviews">
+                                <i class="bi bi-book mb-2" style="font-size: 2rem;"></i>
+                                <p>You haven't written any reviews yet.</p>
+                            </div>
+                        `;
+                    }
                 } else {
                     console.error('Failed to load profile:', data.error);
                 }

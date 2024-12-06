@@ -19,32 +19,103 @@
         body {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            min-height: 100vh;
             background-color: #f9f9f9;
             color: #333;
         }
 
-        header {
+        .navbar {
             width: 100%;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             background-color: #444;
-            color: #fff;
+            padding: 0.75rem 0;
+            margin: 0;
         }
-
-        .user-icon {
+        
+        .navbar .container-fluid {
+            padding: 0 2rem;
+        }
+        
+        .navbar-brand {
+            color: white !important;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .navbar-brand:hover {
+            color: #f0f0f0;
+        }
+        
+        .user-profile {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background-color: #888;
+            background-color: #666;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
             cursor: pointer;
-            position: relative;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .user-profile:hover {
+            background-color: #777;
+        }
+        
+        .dropdown-menu {
+            margin-top: 0.5rem;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 0.5rem 0;
+        }
+        
+        .dropdown-item {
+            padding: 0.6rem 1.2rem;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .dropdown-item i {
+            margin-right: 0.5rem;
+            width: 1.2em;
+            color: #666;
+        }
+
+        .container {
+            flex: 1;
+            width: 100%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Search Container */
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #666;
         }
 
         /* Grid Container */
@@ -52,10 +123,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 2rem;
-            padding: 2rem;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 1rem;
         }
 
         .book-grid {
@@ -134,35 +202,6 @@
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        .search-container {
-            width: 100%;
-            max-width: 600px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 12px 24px;
-            border-radius: 30px;
-            border: 2px solid #e0e0e0;
-            background-color: white;
-            color: #333;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
-        }
-
-        .search-input::placeholder {
-            color: #999;
-        }
-
         .no-results {
             text-align: center;
             padding: 2rem;
@@ -200,23 +239,30 @@
 </head>
 <body>
 
-<header>
-    <h1>WriteShelf</h1>
-    <div class="user-icon" onclick="toggleDropdown()">
-        <i class="bi bi-person-fill"></i>
-        <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/profile">Profile</a>
-            <a href="#" onclick="logout()">Logout</a>
+<nav class="navbar">
+    <div class="container-fluid">
+        <a href="/main" class="navbar-brand">WriteShelf</a>
+        <div class="dropdown">
+            <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false" id="userProfileDropdown">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileDropdown">
+                <li><a class="dropdown-item" href="/profile"><i class="bi bi-person-circle"></i>Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i>Logout</a></li>
+            </ul>
         </div>
     </div>
-</header>
+</nav>
 
-<div class="search-container">
-    <input type="text" class="search-input" placeholder="Search by title, author, or anything..." id="searchInput">
-</div>
+<div class="container mt-4">
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Search by title, author, or anything..." id="searchInput">
+    </div>
 
-<div class="grid-container" id="bookGrid">
-    <!-- Books will be added here dynamically -->
+    <div class="grid-container" id="bookGrid">
+        <!-- Books will be added here dynamically -->
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -240,28 +286,29 @@
     }
 
     function displayBooks(books) {
-        const bookGrid = document.getElementById('bookGrid');
+        const container = document.querySelector('.grid-container');
+        container.innerHTML = '';
         
-        if (!books || books.length === 0) {
-            bookGrid.innerHTML = '<div class="no-results">No books found matching your search</div>';
-            return;
-        }
-        
-        bookGrid.innerHTML = books.map(book => `
-            <div class="book-card" onclick="window.location.href='/book?id=${book._id}'">
+        books.forEach(book => {
+            const randomId = Math.floor(Math.random() * 1000);
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.innerHTML = `
                 <div class="book-cover">
-                    <img src="${book.cover_image}" alt="${book.title}" onerror="this.src='https://picsum.photos/400/600'">
-                </div>
-                <div class="book-info">
-                    <h3 class="book-title">${book.title}</h3>
-                    <p class="book-author">by ${book.author}</p>
-                    <div class="book-rating">
-                        <span class="stars">${'★'.repeat(Math.floor(book.rating))}${'☆'.repeat(5 - Math.floor(book.rating))}</span>
-                        <span class="rating-value">${book.rating.toFixed(1)}</span>
+                    <img src="https://picsum.photos/seed/${book._id}/400/600" alt="${book.title}">
+                    <div class="book-info">
+                        <h3>${book.title}</h3>
+                        <p>${book.author}</p>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+            
+            card.addEventListener('click', () => {
+                window.location.href = `/book.html?id=${book._id}`;
+            });
+            
+            container.appendChild(card);
+        });
     }
 
     // Load and display books
