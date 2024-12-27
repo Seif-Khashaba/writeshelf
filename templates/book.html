@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ book.title }} - WriteShelf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .book-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .book-cover {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .star-rating {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+        .book-metadata {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .review-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .review-item:last-child {
+            border-bottom: none;
+        }
+        .review-form {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .star-rating-input {
+            font-size: 1.5rem;
+            color: #ccc;
+            cursor: pointer;
+        }
+        .star-rating-input i {
+            margin-right: 0.2rem;
+        }
+        .star-rating-input i.active {
+            color: #ffc107;
+        }
+        .star-rating-input i:hover,
+        .star-rating-input i:hover ~ i {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main') }}">WriteShelf</a>
+            <div class="d-flex">
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">Profile</a>
+                <button onclick="logout()" class="btn btn-outline-light">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container book-container">
+        <div id="bookDetails">
+            <div class="row">
+                <div class="col-md-4">
+                    <img id="bookCover" src="{{ book.cover_image }}" alt="Book Cover" class="img-fluid book-cover mb-3">
+                </div>
+                <div class="col-md-8">
+                    <h1 id="bookTitle" class="mb-3">{{ book.title }}</h1>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="me-3">By <span id="bookAuthor">{{ book.author }}</span></span>
+                        <div class="star-rating">
+                            <span id="bookRating">{{ book.rating }}</span>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                    <p id="bookDescription" class="lead mb-4">{{ book.description }}</p>
+                    
+                    <div class="book-metadata">
+                        <h3 class="h5">Book Details</h3>
+                        <p><strong>Genres:</strong> <span id="bookGenres">{{ ', '.join(book.genres) }}</span></p>
+                        <p><strong>Language:</strong> <span id="bookLanguage">{{ book.language }}</span></p>
+                        <p><strong>Published:</strong> <span id="bookPublishedDate">{{ book.published_date }}</span></p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('reader_page', book_id=book._id) }}" class="btn btn-primary">
+                            <i class="bi bi-book"></i> Read Book
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="book-content">
+                <h2 class="h4 mb-3">Reviews</h2>
+                <div id="reviewsContainer"></div>
+                
+                <div class="review-form">
+                    <h3 class="h5 mb-3">Write a Review</h3>
+                    <form id="reviewForm">
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <div class="star-rating-input">
+                                <i class="bi bi-star" data-rating="1"></i>
+                                <i class="bi bi-star" data-rating="2"></i>
+                                <i class="bi bi-star" data-rating="3"></i>
+                                <i class="bi bi-star" data-rating="4"></i>
+                                <i class="bi bi-star" data-rating="5"></i>
+                                <input type="hidden" name="rating" id="selectedRating">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="review" class="form-label">Your Review</label>
+                            <textarea class="form-control" id="review" name="review" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadReviews() {
+            try {
+                const response = await fetch(`/api/books/{{ book._id }}/reviews`);
+                const data = await response.json();
+                
+                const reviewsContainer = document.getElementById('reviewsContainer');
+                reviewsContainer.innerHTML = '';
+                
+                if (data.length === 0) {
+                    reviewsContainer.innerHTML = '<p>No reviews yet. Be the first to review!</p>';
+                    return;
+                }
+                
+                data.forEach(review => {
+                    const reviewElement = document.createElement('div');
+                    reviewElement.className = 'review-item';
+                    reviewElement.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${review.reviewer}</strong>
+                                <div class="star-rating">
+                                    ${review.rating} <i class="bi bi-star-fill"></i>
+                                </div>
+                            </div>
+                            <small class="text-muted">${new Date(review.created_at).toLocaleDateString()}</small>
+                        </div>
+                        <p class="mt-2">${review.review}</p>
+                    `;
+                    reviewsContainer.appendChild(reviewElement);
+                });
+                
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+            }
+        }
+
+        const starRating = document.querySelector('.star-rating-input');
+        const stars = starRating.querySelectorAll('i');
+        const selectedRating = document.getElementById('selectedRating');
+        let currentRating = 0;
+
+        function updateStars(rating) {
+            stars.forEach(star => {
+                const starRating = parseInt(star.dataset.rating);
+                star.classList.remove('bi-star-fill', 'bi-star');
+                star.classList.add(starRating <= rating ? 'bi-star-fill' : 'bi-star');
+                star.classList.toggle('active', starRating <= rating);
+            });
+        }
+
+        stars.forEach(star => {
+            star.addEventListener('mouseover', () => {
+                updateStars(parseInt(star.dataset.rating));
+            });
+
+            star.addEventListener('mouseout', () => {
+                updateStars(currentRating);
+            });
+
+            star.addEventListener('click', () => {
+                currentRating = parseInt(star.dataset.rating);
+                selectedRating.value = currentRating;
+                updateStars(currentRating);
+            });
+        });
+
+        document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const rating = selectedRating.value;
+            const review = document.getElementById('review').value;
+            
+            if (!rating) {
+                alert('Please select a rating');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/books/{{ book._id }}/reviews`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rating: parseInt(rating), review })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Reload reviews after successful submission
+                    loadReviews();
+                    // Clear form
+                    document.getElementById('reviewForm').reset();
+                    currentRating = 0;
+                    updateStars(0);
+                } else {
+                    alert(data.error || 'Failed to submit review');
+                }
+                
+            } catch (error) {
+                console.error('Error submitting review:', error);
+                alert('Failed to submit review');
+            }
+        });
+
+        async function logout() {
+            try {
+                const response = await fetch('/logout', { method: 'POST' });
+                const data = await response.json();
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+
+        // Load reviews when page loads
+        document.addEventListener('DOMContentLoaded', loadReviews);
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write Your Book - WriteShelf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .editor-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .preview {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+        }
+        #content {
+            min-height: 400px;
+            resize: vertical;
+        }
+        .status-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: none;
+        }
+        .genre-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .genre-tag {
+            background-color: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main') }}">WriteShelf</a>
+            <div class="d-flex">
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">Profile</a>
+                <button onclick="logout()" class="btn btn-outline-light">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="status-badge alert" id="statusBadge"></div>
+
+    <div class="editor-container">
+        <h2 class="mb-4">Write Your Book</h2>
+        <form id="bookForm" class="needs-validation" novalidate>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Book Title</label>
+                        <input type="text" class="form-control" id="title" required>
+                        <div class="invalid-feedback">Please provide a title for your book.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Book Description</label>
+                        <textarea class="form-control" id="description" rows="3" required></textarea>
+                        <div class="invalid-feedback">Please provide a description for your book.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Book Content</label>
+                        <textarea class="form-control" id="content" required></textarea>
+                        <div class="invalid-feedback">Your book needs some content!</div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="cover_image" class="form-label">Cover Image URL</label>
+                        <input type="url" class="form-control" id="cover_image" 
+                               placeholder="https://example.com/image.jpg">
+                        <div class="form-text">Leave empty for a random cover image.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="genres" class="form-label">Genres</label>
+                        <input type="text" class="form-control" id="genres" required
+                               placeholder="Fantasy, Adventure, Mystery">
+                        <div class="invalid-feedback">Please provide at least one genre.</div>
+                        <div class="form-text">Separate genres with commas</div>
+                        <div class="genre-tags" id="genreTags"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="language" class="form-label">Language</label>
+                        <select class="form-select" id="language" required>
+                            <option value="English" selected>English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-secondary" onclick="saveDraft()">Save as Draft</button>
+                <button type="submit" class="btn btn-primary">Publish Book</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showStatus(message, type) {
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = message;
+            badge.className = `status-badge alert alert-${type}`;
+            badge.style.display = 'block';
+            setTimeout(() => {
+                badge.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateGenreTags() {
+            const genresInput = document.getElementById('genres');
+            const genreTags = document.getElementById('genreTags');
+            const genres = genresInput.value.split(',').map(g => g.trim()).filter(g => g);
+            
+            genreTags.innerHTML = genres.map(genre => 
+                `<span class="genre-tag">${genre}</span>`
+            ).join('');
+        }
+
+        document.getElementById('genres').addEventListener('input', updateGenreTags);
+
+        async function handleSubmit(event, status = 'published') {
+            event.preventDefault();
+            
+            const form = event.target.closest('form');
+            if (!form.checkValidity()) {
+                event.stopPropagation();
+                form.classList.add('was-validated');
+                return;
+            }
+
+            // Get genres and filter out empty strings
+            const genres = document.getElementById('genres').value
+                .split(',')
+                .map(g => g.trim())
+                .filter(g => g);
+
+            if (genres.length === 0) {
+                showStatus('Please add at least one genre', 'danger');
+                return;
+            }
+
+            const bookData = {
+                title: document.getElementById('title').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                content: document.getElementById('content').value.trim(),
+                genres: genres,
+                cover_image: document.getElementById('cover_image').value.trim() || null,
+                language: document.getElementById('language').value,
+                status: status
+            };
+
+            try {
+                const response = await fetch('/api/books', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus(result.message, 'success');
+                    if (status === 'published') {
+                        // Redirect to main page after successful publish
+                        setTimeout(() => {
+                            window.location.href = '/main';
+                        }, 1500);
+                    }
+                } else {
+                    showStatus(result.error || 'Failed to save book', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error saving book. Please try again.', 'danger');
+            }
+        }
+
+        document.getElementById('bookForm').addEventListener('submit', (e) => handleSubmit(e, 'published'));
+
+        function saveDraft(e) {
+            if (e) e.preventDefault();
+            handleSubmit({ preventDefault: () => {}, target: document.getElementById('bookForm') }, 'draft');
+        }
+
+        function logout() {
+            fetch('/logout', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.replace(data.redirect);
+                    }
+                })
+                .catch(error => console.error('Logout error:', error));
+        }
+
+        // Auto-save draft every 5 minutes
+        setInterval(saveDraft, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

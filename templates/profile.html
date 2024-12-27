@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WriteShelf - Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .profile-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-item {
+            text-align: center;
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .stat-item:hover {
+            background-color: #f8f9fa;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        .reviews-breakdown {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            z-index: 1000;
+        }
+        .user-list-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .user-list-item:last-child {
+            border-bottom: none;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .review-history {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+        }
+        
+        .review-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s;
+        }
+        
+        .review-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .review-title {
+            font-weight: bold;
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        
+        .review-title:hover {
+            text-decoration: underline;
+        }
+        
+        .review-rating {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .review-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .review-content {
+            color: #212529;
+            margin-top: 0.5rem;
+        }
+        
+        .no-reviews {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 1rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 2rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 3.5rem;
+            padding-bottom: 1.5rem;
+            border-left: 2px solid transparent;
+        }
+
+        .timeline-icon {
+            position: absolute;
+            left: 1.25rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 1.5rem;
+            font-size: 0.875rem;
+            background: #fff;
+            border: 2px solid;
+            transform: translateX(-50%);
+        }
+
+        .timeline-content {
+            background: #fff;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .timeline-date {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-review .timeline-icon {
+            border-color: #ffc107;
+            color: #ffc107;
+        }
+
+        .timeline-book .timeline-icon {
+            border-color: #28a745;
+            color: #28a745;
+        }
+
+        .timeline-follow .timeline-icon {
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+        }
+
+        .timeline-content h6 {
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-content p {
+            margin-bottom: 0;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/main">WriteShelf</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/main">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/library">Library</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item active" href="/profile">Profile</a></li>
+                            <li><a class="dropdown-item" href="/settings">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/api/logout">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Content -->
+    <div class="container profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="bi bi-person-circle" style="font-size: 6rem; color: #6c757d;"></i>
+            </div>
+            <h2 class="mt-3" id="username">Loading...</h2>
+            <p class="text-muted" id="email">Loading...</p>
+        </div>
+
+        <div class="profile-stats">
+            <div class="stat-item" onclick="showBooks()">
+                <div class="stat-value" id="booksCount">0</div>
+                <div class="stat-label">Books</div>
+            </div>
+            <div class="stat-item" onclick="showFollowers()">
+                <div class="stat-value" id="followersCount">0</div>
+                <div class="stat-label">Followers</div>
+            </div>
+            <div class="stat-item" onclick="showFollowing()">
+                <div class="stat-value" id="followingCount">0</div>
+                <div class="stat-label">Following</div>
+            </div>
+            <div class="stat-item" onclick="showReviews()">
+                <div class="stat-value" id="reviewsCount">0</div>
+                <div class="stat-label">Reviews</div>
+                <div class="reviews-breakdown" id="reviewsBreakdown" style="display: none;">
+                    <small class="text-muted">
+                        Given: <span id="reviewsGiven">0</span> | 
+                        Received: <span id="reviewsReceived">0</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Section -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Activity Timeline</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="timeline" id="userTimeline">
+                        <!-- Timeline items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review History Section -->
+        <div class="review-history mt-4">
+            <h3 class="mb-3">Your Reviews</h3>
+            <div id="reviewHistory" class="review-list">
+                <!-- Reviews will be loaded here -->
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-primary edit-profile-btn" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                Edit Profile
+            </button>
+        </div>
+
+        <div class="profile-actions mt-4">
+            <a href="/preferences" class="btn btn-secondary me-2">Edit Preferences</a>
+            <a href="/writing" class="btn btn-primary me-2">Write a Book</a>
+            <button onclick="logout()" class="btn btn-outline-danger">Logout</button>
+        </div>
+    </div>
+
+    <!-- Followers Modal -->
+    <div class="modal fade followers-modal" id="followersModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Followers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="followersModalBody">
+                    <!-- Followers will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Following Modal -->
+    <div class="modal fade followers-modal" id="followingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Following</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="followingModalBody">
+                    <!-- Following users will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProfileForm">
+                        <div class="mb-3">
+                            <label for="editUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="editUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editBio" class="form-label">Bio</label>
+                            <textarea class="form-control" id="editBio" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let followersModal;
+        let followingModal;
+        let currentUsername;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            followersModal = new bootstrap.Modal(document.getElementById('followersModal'));
+            followingModal = new bootstrap.Modal(document.getElementById('followingModal'));
+            loadProfile();
+        });
+
+        async function loadProfile() {
+            try {
+                // Load user profile
+                const profileResponse = await fetch('/api/user/profile');
+                const profileData = await profileResponse.json();
+                
+                currentUsername = profileData.username;
+                document.getElementById('username').textContent = profileData.name || currentUsername;
+                document.getElementById('email').textContent = profileData.email;
+                
+                if (profileData.photo) {
+                    document.querySelector('.profile-avatar').innerHTML = `
+                        <img src="${profileData.photo}" alt="Profile Photo" class="profile-avatar">
+                    `;
+                }
+
+                // Load user stats
+                const statsResponse = await fetch(`/api/user/stats/${currentUsername}`);
+                if (!statsResponse.ok) throw new Error('Failed to load user stats');
+                const stats = await statsResponse.json();
+                
+                // Update all counters with the stats directly from the API
+                document.getElementById('followersCount').textContent = stats.followers_count || 0;
+                document.getElementById('followingCount').textContent = stats.following_count || 0;
+                document.getElementById('booksCount').textContent = stats.books_count || 0;
+                document.getElementById('reviewsCount').textContent = stats.total_reviews || 0;
+                document.getElementById('reviewsGiven').textContent = stats.reviews_given || 0;
+                document.getElementById('reviewsReceived').textContent = stats.reviews_received || 0;
+
+                // Load timeline
+                loadTimeline(currentUsername);
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showAlert('error', 'Failed to load profile data');
+            }
+        }
+
+        // Function to update counters
+        function updateCounters(stats) {
+            if (!stats) return;
+            
+            document.getElementById('followersCount').textContent = stats.followers_count || 0;
+            document.getElementById('followingCount').textContent = stats.following_count || 0;
+            document.getElementById('booksCount').textContent = stats.books_count || 0;
+            document.getElementById('reviewsCount').textContent = stats.total_reviews || 0;
+            document.getElementById('reviewsGiven').textContent = stats.reviews_given || 0;
+            document.getElementById('reviewsReceived').textContent = stats.reviews_received || 0;
+        }
+
+        // Show/hide reviews breakdown on hover
+        document.querySelector('.stat-item:last-child').addEventListener('mouseenter', function() {
+            document.getElementById('reviewsBreakdown').style.display = 'block';
+        });
+
+        document.querySelector('.stat-item:last-child').addEventListener('mouseleave', function() {
+            document.getElementById('reviewsBreakdown').style.display = 'none';
+        });
+
+        // Add event listener for custom event
+        window.addEventListener('statsUpdated', (event) => {
+            updateCounters(event.detail);
+        });
+
+        async function showBooks() {
+            try {
+                const response = await fetch(`/api/books?author=${currentUsername}`);
+                const books = await response.json();
+                
+                // TODO: Show books in a modal or redirect to books page
+                window.location.href = '/library';
+            } catch (error) {
+                console.error('Error loading books:', error);
+                showAlert('error', 'Failed to load books');
+            }
+        }
+
+        async function showFollowers() {
+            try {
+                const username = document.getElementById('username').textContent;
+                const response = await fetch(`/api/users/${username}/followers`);
+                const followers = await response.json();
+                
+                const modalBody = document.getElementById('followersModalBody');
+                if (followers.length === 0) {
+                    modalBody.innerHTML = '<p class="text-center text-muted my-4">No followers yet</p>';
+                } else {
+                    modalBody.innerHTML = followers.map(user => `
+                        <div class="user-list-item">
+                            <img src="${user.photo || '/static/default-profile.jpg'}" 
+                                 alt="${user.username}" 
+                                 class="user-avatar">
+                            <div>
+                                <h6 class="mb-0">${user.name || user.username}</h6>
+                                <small class="text-muted">@${user.username}</small>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                followersModal.show();
+            } catch (error) {
+                console.error('Error loading followers:', error);
+                showAlert('error', 'Failed to load followers');
+            }
+        }
+
+        async function showFollowing() {
+            try {
+                const username = document.getElementById('username').textContent;
+                const response = await fetch(`/api/users/${username}/following`);
+                const following = await response.json();
+                
+                const modalBody = document.getElementById('followingModalBody');
+                if (following.length === 0) {
+                    modalBody.innerHTML = '<p class="text-center text-muted my-4">Not following anyone yet</p>';
+                } else {
+                    modalBody.innerHTML = following.map(user => `
+                        <div class="user-list-item">
+                            <img src="${user.photo || '/static/default-profile.jpg'}" 
+                                 alt="${user.username}" 
+                                 class="user-avatar">
+                            <div>
+                                <h6 class="mb-0">${user.name || user.username}</h6>
+                                <small class="text-muted">@${user.username}</small>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                followingModal.show();
+            } catch (error) {
+                console.error('Error loading following:', error);
+                showAlert('error', 'Failed to load following users');
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.profile-container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+
+        async function saveProfile() {
+            const formData = {
+                username: document.getElementById('editUsername').value,
+                email: document.getElementById('editEmail').value,
+                bio: document.getElementById('editBio').value
+            };
+
+            try {
+                const response = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload profile data
+                    loadProfile();
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+                    modal.hide();
+                } else {
+                    alert(data.error || 'Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('An error occurred while updating your profile');
+            }
+        }
+
+        async function loadTimeline(username) {
+            try {
+                const response = await fetch(`/api/user/timeline/${username}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load timeline');
+                }
+                
+                const timelineContainer = document.getElementById('userTimeline');
+                timelineContainer.innerHTML = '';
+                
+                if (!data.timeline || data.timeline.length === 0) {
+                    timelineContainer.innerHTML = '<p class="text-muted text-center">No activities yet</p>';
+                    return;
+                }
+                
+                data.timeline.forEach(item => {
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = `timeline-item timeline-${item.type}`;
+                    
+                    let iconContent = '';
+                    let content = '';
+                    const details = item.details || {};
+                    
+                    switch(item.type) {
+                        case 'review':
+                            iconContent = '★';
+                            const stars = '★'.repeat(details.rating) + '☆'.repeat(5 - details.rating);
+                            content = `
+                                <h6>Reviewed <a href="/book/${details.book_id}">${details.book_title}</a></h6>
+                                <div class="rating-stars">${stars}</div>
+                                <p>${details.content || ''}</p>
+                            `;
+                            break;
+                            
+                        case 'book':
+                            iconContent = '📖';
+                            content = `
+                                <h6>Published a new book</h6>
+                                <p><a href="/book/${details.book_id}">${details.book_title}</a></p>
+                                <p class="text-muted">${details.description || ''}</p>
+                            `;
+                            break;
+                            
+                        case 'follow':
+                            iconContent = '👥';
+                            content = `
+                                <h6>Started following</h6>
+                                <p><a href="/profile/${details.followed_user}">${details.followed_user}</a></p>
+                            `;
+                            break;
+                            
+                        case 'view':
+                            iconContent = '👁️';
+                            content = `
+                                <h6>Viewed a book</h6>
+                                <p><a href="/book/${details.book_id}">${details.book_title || 'Unknown Book'}</a></p>
+                            `;
+                            break;
+                            
+                        default:
+                            return; // Skip unknown activity types
+                    }
+                    
+                    timelineItem.innerHTML = `
+                        <div class="timeline-icon">${iconContent}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-date">${formatDate(item.timestamp)}</div>
+                            ${content}
+                        </div>
+                    `;
+                    
+                    timelineContainer.appendChild(timelineItem);
+                });
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+                document.getElementById('userTimeline').innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to load timeline. Please try refreshing the page.
+                    </div>
+                `;
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            
+            // Less than 24 hours
+            if (diff < 86400000) {
+                if (diff < 3600000) {
+                    const minutes = Math.floor(diff / 60000);
+                    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+                } else {
+                    const hours = Math.floor(diff / 3600000);
+                    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+                }
+            }
+            
+            // Less than 7 days
+            if (diff < 604800000) {
+                const days = Math.floor(diff / 86400000);
+                return `${days} day${days !== 1 ? 's' : ''} ago`;
+            }
+            
+            // Format as date
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Load timeline when profile loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const username = getCurrentUsername();
+            if (username) {
+                loadTimeline(username);
+            }
+        });
+    </script>
+</body>
+</html>

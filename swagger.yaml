@@ -1,0 +1,465 @@
+openapi: 3.0.0
+info:
+  title: WriteShelf API
+  description: API documentation for WriteShelf - A platform for writers and readers
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        author_name:
+          type: string
+        author_photo:
+          type: string
+          nullable: true
+        cover:
+          type: string
+          nullable: true
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        likes:
+          type: integer
+        reviews:
+          type: integer
+        is_liked:
+          type: boolean
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        photo:
+          type: string
+          nullable: true
+    UserStats:
+      type: object
+      properties:
+        followers_count:
+          type: integer
+        following_count:
+          type: integer
+        books_count:
+          type: integer
+        reviews_given:
+          type: integer
+        reviews_received:
+          type: integer
+        total_reviews:
+          type: integer
+
+paths:
+  /api/login:
+    post:
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "john_doe"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Login successful"
+                  redirect:
+                    type: string
+                    example: "/main"
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Invalid username or password"
+
+  /api/signup:
+    post:
+      summary: User signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "john_doe"
+                email:
+                  type: string
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "password123"
+                full_name:
+                  type: string
+                  example: "John Doe"
+                gender:
+                  type: string
+                  example: "Male"
+                country:
+                  type: string
+                  example: "USA"
+      responses:
+        '200':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Account created successfully"
+        '400':
+          description: Missing fields or duplicate username/email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Username already exists"
+
+  /api/preferences:
+    post:
+      summary: Save user preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                genres:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Fiction", "Mystery", "Science"]
+      responses:
+        '200':
+          description: Preferences saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Preferences saved successfully"
+        '401':
+          description: Not logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Not logged in"
+
+  /api/logout:
+    get:
+      summary: User logout
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Logout successful"
+
+  /api/books/search:
+    get:
+      summary: Search for books by title or author
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of books matching the search query
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user/stats/{username}:
+    get:
+      summary: Get user statistics
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: username
+          in: path
+          description: Username to get stats for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStats'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/search:
+    get:
+      summary: Search for users by username or name
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of users matching the search query
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/{username}/followers:
+    get:
+      summary: Get user's followers
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: username
+          in: path
+          description: Username to get followers for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of followers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/{username}/following:
+    get:
+      summary: Get users that this user follows
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: username
+          in: path
+          description: Username to get following for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of users being followed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/follow:
+    post:
+      summary: Follow or unfollow a user
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - action
+              properties:
+                username:
+                  type: string
+                action:
+                  type: string
+                  enum: [follow, unfollow]
+      responses:
+        '200':
+          description: Follow action successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  action:
+                    type: string
+                  followers_count:
+                    type: integer
+                  following_count:
+                    type: integer
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

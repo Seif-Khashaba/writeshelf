@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Reader - WriteShelf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            line-height: 1.8;
+        }
+        .reader-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: calc(100vh - 4rem);
+        }
+        .book-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .book-content {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #2c3e50;
+            white-space: pre-wrap;
+        }
+        .book-content p {
+            margin-bottom: 1.5rem;
+        }
+        .reader-controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+        .font-size-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .progress-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .theme-toggle {
+            cursor: pointer;
+        }
+        /* Dark theme */
+        body.dark-theme {
+            background-color: #1a1a1a;
+        }
+        .dark-theme .reader-container {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+        .dark-theme .book-content {
+            color: #e0e0e0;
+        }
+        .dark-theme .reader-controls {
+            background: rgba(45, 45, 45, 0.9);
+            color: #e0e0e0;
+        }
+        .dark-theme .btn-outline-dark {
+            color: #e0e0e0;
+            border-color: #e0e0e0;
+        }
+        .dark-theme .btn-outline-dark:hover {
+            color: #2d2d2d;
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main') }}">WriteShelf</a>
+            <div class="d-flex">
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">Profile</a>
+                <button onclick="logout()" class="btn btn-outline-light">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="reader-container">
+        <div class="book-header">
+            <h1 class="mb-3">{{ book.title }}</h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="mb-0">By {{ book.author }}</p>
+                </div>
+                <div class="star-rating">
+                    {{ book.rating }} <i class="bi bi-star-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="book-content" id="bookContent">
+            {{ book.content }}
+        </div>
+    </div>
+
+    <div class="reader-controls">
+        <div class="font-size-control">
+            <button class="btn btn-outline-dark btn-sm" onclick="changeFontSize(-1)">
+                <i class="bi bi-dash"></i>
+            </button>
+            <span id="fontSize">18</span>
+            <button class="btn btn-outline-dark btn-sm" onclick="changeFontSize(1)">
+                <i class="bi bi-plus"></i>
+            </button>
+        </div>
+        
+        <div class="theme-toggle">
+            <button class="btn btn-outline-dark btn-sm" onclick="toggleTheme()">
+                <i class="bi bi-moon"></i>
+            </button>
+        </div>
+
+        <div class="progress-info">
+            <span id="progress">0%</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentFontSize = 18;
+        const content = document.getElementById('bookContent');
+        const fontSizeDisplay = document.getElementById('fontSize');
+        const progressDisplay = document.getElementById('progress');
+        
+        function changeFontSize(delta) {
+            currentFontSize = Math.max(12, Math.min(24, currentFontSize + delta));
+            content.style.fontSize = `${currentFontSize}px`;
+            fontSizeDisplay.textContent = currentFontSize;
+            saveSettings();
+        }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            saveSettings();
+        }
+        
+        function updateProgress() {
+            const scrollPosition = window.scrollY;
+            const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = Math.round((scrollPosition / totalHeight) * 100);
+            progressDisplay.textContent = `${progress}%`;
+            saveSettings();
+        }
+        
+        function saveSettings() {
+            const settings = {
+                fontSize: currentFontSize,
+                darkTheme: document.body.classList.contains('dark-theme'),
+                progress: progressDisplay.textContent
+            };
+            localStorage.setItem('readerSettings', JSON.stringify(settings));
+        }
+        
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('readerSettings') || '{}');
+            if (settings.fontSize) {
+                currentFontSize = settings.fontSize;
+                content.style.fontSize = `${currentFontSize}px`;
+                fontSizeDisplay.textContent = currentFontSize;
+            }
+            if (settings.darkTheme) {
+                document.body.classList.add('dark-theme');
+            }
+        }
+        
+        window.addEventListener('scroll', updateProgress);
+        document.addEventListener('DOMContentLoaded', loadSettings);
+        
+        async function logout() {
+            try {
+                const response = await fetch('/logout', { method: 'POST' });
+                const data = await response.json();
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+    </script>
+</body>
+</html>

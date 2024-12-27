@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WriteShelf - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0066cc;
+            --error-color: #dc3545;
+            --transition-time: 0.5s;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: url('https://picsum.photos/1920/1080') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            width: 400px;
+            max-width: 90vw;
+            transition: width var(--transition-time) ease-in-out;
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .form-container.signup-mode {
+            width: 800px;
+        }
+
+        .forms-wrapper {
+            display: flex;
+            width: 200%;
+            transition: transform var(--transition-time) ease-in-out;
+        }
+
+        .form-section {
+            width: 50%;
+            padding: 2rem;
+        }
+
+        .signup-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background: #0052a3;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .switch-form {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #666;
+        }
+
+        .switch-form a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .switch-form a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-container.signup-mode .forms-wrapper {
+            transform: translateX(-50%);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .form-container.signup-mode {
+                width: 90vw;
+            }
+
+            .signup-form {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container" id="formContainer">
+        <div class="forms-wrapper">
+            <!-- Login Form -->
+            <div class="form-section">
+                <h2>Welcome Back</h2>
+                <form onsubmit="return login(event)">
+                    <div class="form-group">
+                        <input type="text" id="username" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="password" placeholder="Password" required>
+                    </div>
+                    <div class="error-message" id="loginError"></div>
+                    <button type="submit">Login</button>
+                </form>
+                <p class="switch-form">
+                    Don't have an account? <a href="#" onclick="toggleForm('signup')">Sign up</a>
+                </p>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="form-section">
+                <h2>Create Account</h2>
+                <form class="signup-form" onsubmit="return signup(event)">
+                    <div class="form-group full-width">
+                        <input type="text" id="signupUsername" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="fullName" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="signupEmail" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <select id="gender" required>
+                            <option value="">Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                            <option value="prefer_not">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="country" required>
+                            <option value="">Country</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="signupPassword" placeholder="Password" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    </div>
+                    <div class="error-message full-width" id="signupError"></div>
+                    <button type="submit" class="full-width">Create Account</button>
+                </form>
+                <p class="switch-form">
+                    Already have an account? <a href="#" onclick="toggleForm('login')">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleForm(formType) {
+            const container = document.getElementById('formContainer');
+            if (formType === 'signup') {
+                container.classList.add('signup-mode');
+            } else {
+                container.classList.remove('signup-mode');
+            }
+            // Clear any error messages
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('signupError').style.display = 'none';
+        }
+
+        // Populate country dropdown
+        fetch('https://restcountries.com/v3.1/all')
+            .then(response => response.json())
+            .then(countries => {
+                const countrySelect = document.getElementById('country');
+                countries
+                    .sort((a, b) => a.name.common.localeCompare(b.name.common))
+                    .forEach(country => {
+                        const option = document.createElement('option');
+                        option.value = country.cca2;
+                        option.textContent = country.name.common;
+                        countrySelect.appendChild(option);
+                    });
+            })
+            .catch(error => console.error('Error loading countries:', error));
+
+        async function login(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('loginError');
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    errorElement.textContent = data.error || 'Login failed. Please try again.';
+                    errorElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorElement.textContent = 'Network error occurred. Please try again.';
+                errorElement.style.display = 'block';
+            }
+            return false;
+        }
+
+        async function signup(event) {
+            event.preventDefault();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorElement = document.getElementById('signupError');
+
+            if (password !== confirmPassword) {
+                errorElement.textContent = 'Passwords do not match';
+                errorElement.style.display = 'block';
+                return false;
+            }
+
+            const formData = {
+                username: document.getElementById('signupUsername').value,
+                email: document.getElementById('signupEmail').value,
+                password: password
+            };
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    errorElement.textContent = data.error || 'Signup failed. Please try again.';
+                    errorElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                errorElement.textContent = 'An error occurred. Please try again.';
+                errorElement.style.display = 'block';
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>

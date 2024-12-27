@@ -1,0 +1,199 @@
+{
+	"info": {
+		"_postman_id": "1234567-89ab-cdef-0123-456789abcdef",
+		"name": "WriteShelf API",
+		"description": "Collection for testing WriteShelf API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "login"]
+						}
+					}
+				},
+				{
+					"name": "Signup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"newuser\",\n    \"password\": \"password123\",\n    \"email\": \"newuser@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "signup"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "logout"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Books",
+			"item": [
+				{
+					"name": "Search Books",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/books/search?q=test",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "books", "search"],
+							"query": [
+								{
+									"key": "q",
+									"value": "test"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Search Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/search?q=test",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "search"],
+							"query": [
+								{
+									"key": "q",
+									"value": "test"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/stats/testuser",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "stats", "testuser"]
+						}
+					}
+				},
+				{
+					"name": "Get User Followers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/testuser/followers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "testuser", "followers"]
+						}
+					}
+				},
+				{
+					"name": "Get User Following",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/testuser/following",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "testuser", "following"]
+						}
+					}
+				},
+				{
+					"name": "Follow User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"action\": \"follow\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/follow",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "follow"]
+						}
+					}
+				},
+				{
+					"name": "Unfollow User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"action\": \"unfollow\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/follow",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "follow"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

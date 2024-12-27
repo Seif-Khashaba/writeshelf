@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - WriteShelf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .settings-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            border: 3px solid #e9ecef;
+        }
+        .photo-upload {
+            display: none;
+        }
+        .upload-btn {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .upload-btn:hover {
+            background-color: #e9ecef;
+        }
+        .settings-section {
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .settings-section h3 {
+            margin-bottom: 1.5rem;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main') }}">WriteShelf</a>
+            <div class="d-flex">
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">Profile</a>
+                <button onclick="logout()" class="btn btn-outline-light">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container settings-container">
+        <h2 class="mb-4">Account Settings</h2>
+        
+        <div class="settings-section">
+            <h3>Profile Photo</h3>
+            <div class="text-center">
+                <img id="profilePhoto" src="/static/default-profile.jpg" alt="Profile Photo" class="profile-photo">
+                <div>
+                    <label for="photoUpload" class="upload-btn">
+                        <i class="bi bi-camera"></i> Change Photo
+                    </label>
+                    <input type="file" id="photoUpload" class="photo-upload" accept="image/*">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3>Personal Information</h3>
+            <form id="personalInfoForm" class="mb-4">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Display Name</label>
+                    <input type="text" class="form-control" id="name" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Personal Info</button>
+            </form>
+        </div>
+
+        <div class="settings-section">
+            <h3>Change Password</h3>
+            <form id="passwordForm">
+                <div class="mb-3">
+                    <label for="currentPassword" class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="currentPassword" required>
+                </div>
+                <div class="mb-3">
+                    <label for="newPassword" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" required>
+                </div>
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Load user data
+        async function loadUserData() {
+            try {
+                const response = await fetch('/api/user/profile');
+                if (!response.ok) throw new Error('Failed to load user data');
+                
+                const userData = await response.json();
+                document.getElementById('name').value = userData.name || '';
+                if (userData.photo) {
+                    document.getElementById('profilePhoto').src = userData.photo;
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                showAlert('error', 'Failed to load user data');
+            }
+        }
+
+        // Handle photo upload
+        document.getElementById('photoUpload').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('photo', file);
+
+            try {
+                const response = await fetch('/api/user/photo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Failed to upload photo');
+                
+                const data = await response.json();
+                document.getElementById('profilePhoto').src = data.photo_url;
+                showAlert('success', 'Photo updated successfully');
+            } catch (error) {
+                console.error('Error uploading photo:', error);
+                showAlert('error', 'Failed to upload photo');
+            }
+        });
+
+        // Handle personal info update
+        document.getElementById('personalInfoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                if (!response.ok) throw new Error('Failed to update profile');
+                
+                showAlert('success', 'Profile updated successfully');
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showAlert('error', 'Failed to update profile');
+            }
+        });
+
+        // Handle password change
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showAlert('error', 'New passwords do not match');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/password', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to change password');
+                
+                document.getElementById('passwordForm').reset();
+                showAlert('success', 'Password changed successfully');
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showAlert('error', 'Failed to change password');
+            }
+        });
+
+        // Show alert message
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.querySelector('.settings-container').insertAdjacentElement('afterbegin', alertDiv);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Logout function
+        function logout() {
+            fetch('/logout', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.replace(data.redirect);
+                    }
+                })
+                .catch(error => console.error('Logout error:', error));
+        }
+
+        // Load user data when page loads
+        document.addEventListener('DOMContentLoaded', loadUserData);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

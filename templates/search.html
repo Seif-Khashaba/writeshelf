@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Users - WriteShelf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .search-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-input {
+            border-radius: 20px;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        .search-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+        }
+        .user-card {
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .user-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .follow-btn {
+            min-width: 100px;
+        }
+        .user-stats {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main') }}">WriteShelf</a>
+            <div class="d-flex">
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">Profile</a>
+                <button onclick="logout()" class="btn btn-outline-light">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container search-container">
+        <div class="mb-4">
+            <h2>Find Users</h2>
+            <p class="text-muted">Search for other users to follow and discover their books</p>
+        </div>
+
+        <div class="mb-4">
+            <input type="text" id="searchInput" class="form-control search-input" 
+                   placeholder="Search by username or name..." 
+                   oninput="debounceSearch(this.value)">
+        </div>
+
+        <div id="searchResults">
+            <!-- Search results will be displayed here -->
+        </div>
+
+        <div id="loadingSpinner" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let debounceTimeout;
+        let currentUsername;
+
+        // Get current user's username when page loads
+        async function getCurrentUser() {
+            try {
+                const response = await fetch('/api/user/profile');
+                const data = await response.json();
+                currentUsername = data.username;
+            } catch (error) {
+                console.error('Error getting current user:', error);
+            }
+        }
+
+        function debounceSearch(value) {
+            clearTimeout(debounceTimeout);
+            if (value.trim().length === 0) {
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+            debounceTimeout = setTimeout(() => searchUsers(value), 300);
+        }
+
+        async function searchUsers(query) {
+            showLoading(true);
+            try {
+                const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+                const users = await response.json();
+                displayUsers(users);
+            } catch (error) {
+                console.error('Search error:', error);
+                showError('Failed to search users. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayUsers(users) {
+            const searchResults = document.getElementById('searchResults');
+            if (!users || users.length === 0) {
+                searchResults.innerHTML = `
+                    <div class="text-center text-muted my-4">
+                        No users found
+                    </div>
+                `;
+                return;
+            }
+
+            searchResults.innerHTML = users.map(user => `
+                <div class="user-card d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <img src="${user.photo || 'https://via.placeholder.com/64'}" 
+                             alt="${user.username}" 
+                             class="user-avatar me-3">
+                        <div>
+                            <h5 class="mb-1">
+                                <a href="/profile/${user.username}" class="text-decoration-none text-dark">
+                                    ${user.name}
+                                </a>
+                            </h5>
+                            <div class="text-muted mb-2">@${user.username}</div>
+                            ${user.bio ? `<p class="mb-2">${user.bio}</p>` : ''}
+                            <div class="user-stats">
+                                <span class="me-3">${user.stats.books} books</span>
+                                <span class="me-3">${user.stats.followers} followers</span>
+                                <span>${user.stats.following} following</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${user.username !== currentUsername ? `
+                        <button onclick="toggleFollow('${user.username}')" 
+                                class="btn ${user.is_following ? 'btn-secondary' : 'btn-primary'} follow-btn">
+                            ${user.is_following ? 'Following' : 'Follow'}
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function showLoading(show) {
+            const spinner = document.getElementById('loadingSpinner');
+            if (show) {
+                spinner.classList.remove('d-none');
+            } else {
+                spinner.classList.add('d-none');
+            }
+        }
+
+        async function toggleFollow(username) {
+            try {
+                const button = event.target;
+                const isFollowing = button.textContent.trim() === 'Following';
+                
+                const response = await fetch('/api/users/follow', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        action: isFollowing ? 'unfollow' : 'follow'
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update follow status');
+                }
+
+                // Update button state
+                button.textContent = isFollowing ? 'Follow' : 'Following';
+                button.classList.toggle('btn-primary');
+                button.classList.toggle('btn-secondary');
+
+                // Update followers count in the card
+                const statsDiv = button.closest('.user-card').querySelector('.user-stats');
+                const followersSpan = statsDiv.querySelector('.me-3');
+                followersSpan.textContent = `${data.followers_count} followers`;
+
+                // Dispatch event to update profile counters if profile page is open
+                window.dispatchEvent(new CustomEvent('followStatusChanged', {
+                    detail: {
+                        followersCount: data.followers_count,
+                        followingCount: data.following_count
+                    }
+                }));
+
+                showAlert(isFollowing ? 'Unfollowed successfully' : 'Following successfully', 'success');
+            } catch (error) {
+                console.error('Error toggling follow:', error);
+                showAlert(error.message, 'error');
+                // Revert button state if there was an error
+                button.textContent = isFollowing ? 'Following' : 'Follow';
+                button.classList.toggle('btn-primary');
+                button.classList.toggle('btn-secondary');
+            }
+        }
+
+        function showError(message) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger alert-dismissible fade show';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.querySelector('.search-container').insertAdjacentElement('afterbegin', alert);
+            
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function showAlert(message, type = 'success') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.search-container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+
+        function logout() {
+            fetch('/logout', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.replace(data.redirect);
+                    }
+                })
+                .catch(error => console.error('Logout error:', error));
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', getCurrentUser);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

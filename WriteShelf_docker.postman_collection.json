@@ -1,0 +1,303 @@
+{
+    "info": {
+        "_postman_id": "1234567-89ab-cdef-0123-456789abcdef",
+        "name": "WriteShelf API (Docker)",
+        "description": "Collection for testing WriteShelf API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8000",
+            "type": "string"
+        },
+        {
+            "key": "testUsername",
+            "value": "testuser{{$timestamp}}",
+            "type": "string"
+        },
+        {
+            "key": "testEmail",
+            "value": "test{{$timestamp}}@example.com",
+            "type": "string"
+        },
+        {
+            "key": "currentUsername",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication Flow",
+            "item": [
+                {
+                    "name": "1. Signup New User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has username and email\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.username).to.include('testuser');",
+                                    "    pm.expect(jsonData.email).to.include('@example.com');",
+                                    "    // Save username for subsequent requests",
+                                    "    pm.collectionVariables.set('currentUsername', jsonData.username);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"{{testUsername}}\",\n    \"password\": \"password123\",\n    \"email\": \"{{testEmail}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/signup",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "signup"]
+                        }
+                    }
+                },
+                {
+                    "name": "2. Login User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has username\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.username).to.eql(pm.collectionVariables.get('currentUsername'));",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"{{currentUsername}}\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "login"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Books Operations",
+            "item": [
+                {
+                    "name": "Add Sample Book",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Test Book\",\n    \"author\": \"Test Author\",\n    \"description\": \"A test book for testing search functionality\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/books",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "books"]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Books",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has books array\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('books');",
+                                    "    pm.expect(jsonData.books).to.be.an('array');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/books/search?q=test",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "books", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "test"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User Profile",
+            "item": [
+                {
+                    "name": "Get Profile",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Profile has required fields\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('username');",
+                                    "    pm.expect(jsonData).to.have.property('email');",
+                                    "    pm.expect(jsonData).to.have.property('bio');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/profile",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "users", "profile"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Profile",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Profile updated successfully\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.message).to.eql('Profile updated successfully');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"bio\": \"Updated bio for testing\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/users/profile",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "users", "profile"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Cleanup",
+            "item": [
+                {
+                    "name": "Logout",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Logout successful\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.message).to.eql('Logout successful');",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/api/logout",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "logout"]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

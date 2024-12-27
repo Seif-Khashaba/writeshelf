@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Reader - WriteShelf</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            line-height: 1.8;
+        }
+        .reader-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: calc(100vh - 4rem);
+        }
+        .book-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .pdf-content {
+            text-align: center;
+            position: relative;
+        }
+        .pdf-page {
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: opacity 0.3s ease;
+        }
+        .pdf-page.loading {
+            opacity: 0.5;
+        }
+        .reader-controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+        .page-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-input {
+            width: 60px;
+            text-align: center;
+        }
+        .theme-toggle {
+            cursor: pointer;
+        }
+        /* Loading spinner */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .error-message {
+            display: none;
+            color: #dc3545;
+            margin-top: 1rem;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 4px;
+        }
+        /* Dark theme */
+        body.dark-theme {
+            background-color: #1a1a1a;
+        }
+        .dark-theme .reader-container {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+        .dark-theme .reader-controls {
+            background: rgba(45, 45, 45, 0.9);
+            color: #e0e0e0;
+        }
+        .dark-theme .btn-outline-dark {
+            color: #e0e0e0;
+            border-color: #e0e0e0;
+        }
+        .dark-theme .btn-outline-dark:hover {
+            color: #2d2d2d;
+            background-color: #e0e0e0;
+        }
+        .dark-theme .form-control {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #4d4d4d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main') }}">WriteShelf</a>
+            <div class="d-flex">
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-light me-2">Profile</a>
+                <button onclick="logout()" class="btn btn-outline-light">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="reader-container">
+        <div class="book-header">
+            <h1 class="mb-3">{{ book.title }}</h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="mb-0">By {{ book.author }}</p>
+                </div>
+                <div class="star-rating">
+                    {{ book.rating }} <i class="bi bi-star-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="pdf-content" id="pdfContent">
+            <img id="pdfPage" class="pdf-page" alt="PDF Page">
+        </div>
+    </div>
+
+    <div class="loading-overlay">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2">Loading page...</div>
+    </div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="reader-controls">
+        <div class="page-controls">
+            <button class="btn btn-outline-dark btn-sm" onclick="previousPage()">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <input type="number" class="form-control form-control-sm page-input" id="currentPage" min="1">
+            <span>of <span id="totalPages">0</span></span>
+            <button class="btn btn-outline-dark btn-sm" onclick="nextPage()">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="theme-toggle">
+            <button class="btn btn-outline-dark btn-sm" onclick="toggleTheme()">
+                <i class="bi bi-moon"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPage = 0;
+        let totalPages = 0;
+        const pageInput = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const pdfPage = document.getElementById('pdfPage');
+        
+        async function loadPage(pageNum) {
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            const errorMessage = document.querySelector('#errorMessage');
+            
+            try {
+                loadingOverlay.style.display = 'flex';
+                errorMessage.style.display = 'none';
+                pdfPage.classList.add('loading');
+                
+                const response = await fetch(`/api/pdf/{{ book._id }}/${pageNum}`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    pdfPage.src = data.image;
+                    currentPage = pageNum;
+                    totalPages = data.total_pages;
+                    pageInput.value = data.page_number;
+                    totalPagesSpan.textContent = totalPages;
+                    
+                    // Save current page to localStorage
+                    saveSettings();
+                } else {
+                    errorMessage.textContent = data.error || 'Failed to load PDF page';
+                    errorMessage.style.display = 'block';
+                    console.error('Error loading page:', data.error);
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Network error: Failed to load PDF page';
+                errorMessage.style.display = 'block';
+                console.error('Error:', error);
+            } finally {
+                loadingOverlay.style.display = 'none';
+                pdfPage.classList.remove('loading');
+            }
+        }
+        
+        function previousPage() {
+            if (currentPage > 0) {
+                loadPage(currentPage - 1);
+            }
+        }
+        
+        function nextPage() {
+            if (currentPage < totalPages - 1) {
+                loadPage(currentPage + 1);
+            }
+        }
+        
+        pageInput.addEventListener('change', () => {
+            const page = parseInt(pageInput.value) - 1;
+            if (page >= 0 && page < totalPages) {
+                loadPage(page);
+            } else {
+                pageInput.value = currentPage + 1;
+            }
+        });
+        
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            saveSettings();
+        }
+        
+        function saveSettings() {
+            const settings = {
+                currentPage: currentPage,
+                darkTheme: document.body.classList.contains('dark-theme')
+            };
+            localStorage.setItem(`pdfSettings_{{ book._id }}`, JSON.stringify(settings));
+        }
+        
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem(`pdfSettings_{{ book._id }}`) || '{}');
+            if (settings.darkTheme) {
+                document.body.classList.add('dark-theme');
+            }
+            loadPage(settings.currentPage || 0);
+        }
+        
+        // Handle keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                previousPage();
+            } else if (e.key === 'ArrowRight') {
+                nextPage();
+            }
+        });
+        
+        async function logout() {
+            try {
+                const response = await fetch('/logout', { method: 'POST' });
+                const data = await response.json();
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+        
+        // Load initial page
+        document.addEventListener('DOMContentLoaded', loadSettings);
+    </script>
+</body>
+</html>
